@@ -1,5 +1,10 @@
 __pycache__/
 .DS_Store
+
+# Created folders
 models/
 embeddings/
-voxceleb1_subset/
+
+# Downloaded data
+data/*
+!data/download.sh
