@@ -5,6 +5,10 @@ Directory layout:
     ./models/               # model cache will be stored here
     ./DATASET/              # source audio: SPK_ID/.../*.[wav, flac]
     ./embeddings/DATASET    # output embeddings mirror the source tree
+
+!!! Always call embedder from the root of this project, so the paths are correct. !!!
+The embedder part should work independently from the rest
+    , it just serves to precompute the embeddings.
 """
 
 import sys
@@ -23,13 +27,13 @@ import speech_brain as backend
 MODELS_DIR = Path("./models")
 # MODEL_ID = "spkrec-ecapa-voxceleb"
 # MODEL_ID = "spkrec-resnet-voxceleb"
-MODEL_ID = "spkrec-xvect-voxceleb"  # Use the weakest model
+MODEL_ID = "spkrec-xvect-voxceleb"  # use the weakest model
 LOCAL_MODEL_DIR = MODELS_DIR / MODEL_ID
 
 # Dataset configuration
 
 # Do NOT use VoxCeleb1 dataset with SpeechBrain models
-#   ,they were trained on VoxCeleb{1,2}
+#   , they were trained on VoxCeleb{1,2}
 # DATASET = "voxceleb1_subset"
 # DATASET = "VCTK"
 # DATASET = "LibriSpeech"
