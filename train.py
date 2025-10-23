@@ -12,7 +12,7 @@ from general.eval import evaluate
 from general.model import CosineMLP
 from general.arg import parse_train_args
 from general.dataset import EmbeddingDataset
-from general.utils import set_seed, build_label_map, infer_embedding_dim
+from general.utils import set_seed, build_label_map, infer_embedding_dim, set_logging
 
 
 def train(
@@ -83,12 +83,7 @@ def train(
 
 
 def main():
-    logging.basicConfig(
-        level=logging.DEBUG,
-        format="%(asctime)s | %(levelname)-8s | %(message)s",
-        datefmt="%H:%M:%S"
-    )
-
+    set_logging()
     args = parse_train_args()
     set_seed(args.seed)
 
@@ -152,18 +147,16 @@ def main():
     train_ds = EmbeddingDataset(train_files, embeddings_root, label_map)
     val_ds = EmbeddingDataset(val_files, embeddings_root, label_map)
 
-    train_loader = DataLoader(train_ds,
-                              batch_size=args.batch_size,
-                              shuffle=True,
-                              num_workers=0,
-                              pin_memory=False)
-    val_loader = DataLoader(val_ds,
-                            batch_size=args.batch_size,
-                            shuffle=False,
-                            num_workers=0,
-                            pin_memory=False)
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=args.batch_size,
+        shuffle=True, num_workers=0, pin_memory=False
+    )
+    val_loader = DataLoader(
+        val_ds, batch_size=args.batch_size,
+        shuffle=False, num_workers=0, pin_memory=False
+    )
 
-    # Model
     model = CosineMLP(
         in_dim=emb_dim,
         hidden_dim=args.hidden_dim,
@@ -172,10 +165,7 @@ def main():
         scale=args.scale,
     ).to(device)
 
-    # Train
-    train(model, train_loader, val_loader,
-          device, args.epochs, args.lr, outdir)
-
+    train(model, train_loader, val_loader, device, args.epochs, args.lr, outdir)
     logging.info(f"Training done. Model saved to: {outdir}")
 
 
