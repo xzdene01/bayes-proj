@@ -3,12 +3,8 @@ Precompute ECAPA-TDNN embeddings for a subset of VoxCeleb1.
 
 Directory layout:
     ./models/               # model cache will be stored here
-    ./DATASET/              # source audio: SPK_ID/.../*.[wav, flac]
+    ./data/DATASET/         # source audio: SPK_ID/.../*.[wav, flac]
     ./embeddings/DATASET    # output embeddings mirror the source tree
-
-!!! Always call embedder from the root of this project, so the paths are correct. !!!
-The embedder part should work independently from the rest
-    , it just serves to precompute the embeddings.
 """
 
 import sys
@@ -21,7 +17,7 @@ from pathlib import Path
 from typing import Iterable
 
 # Backend configuration, must implement download_model, load_model, encode_once
-import speech_brain as backend
+import embedder.speech_brain as backend
 
 # Model configuration
 MODELS_DIR = Path("./models")
@@ -31,13 +27,9 @@ MODEL_ID = "spkrec-xvect-voxceleb"  # use the weakest model
 LOCAL_MODEL_DIR = MODELS_DIR / MODEL_ID
 
 # Dataset configuration
-
-# Do NOT use VoxCeleb1 dataset with SpeechBrain models
-#   , they were trained on VoxCeleb{1,2}
-# DATASET = "voxceleb1_subset"
 # DATASET = "VCTK"
-# DATASET = "LibriSpeech"
-DATASET = "CN-Celeb1"  # should be the hardes dataset here
+DATASET = "LibriSpeech"
+# DATASET = "CN-Celeb1"  # should be the hardes dataset here
 SRC_ROOT = Path(f"./data/{DATASET}")
 DST_ROOT = Path(f"./embeddings/{DATASET}_{MODEL_ID}")
 TARGET_SR = 16000
