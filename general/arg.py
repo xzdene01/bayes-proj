@@ -11,7 +11,7 @@ def parse_train_args():
     )
     ap.add_argument(
         "--outdir",
-        type=str, default="./checkpoints/tmp",  # old files will be lost if path not specified
+        type=str, default="./checkpoints/tmp",
         help="Where to save model and all files created during training"
     )
     ap.add_argument(
@@ -32,7 +32,7 @@ def parse_train_args():
 
 
 def parse_test_args():
-    ap = argparse.ArgumentParser(description="Evaluate trained MLP with MC Dropout")
+    ap = argparse.ArgumentParser(description="Evaluate MLP with MC Dropout")
 
     ap.add_argument(
         "--run_dir",
