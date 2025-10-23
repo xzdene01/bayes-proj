@@ -4,7 +4,7 @@ __pycache__/
 # Created folders
 models/
 embeddings/
-checkpoints/
+runs/
 
 # Downloaded data
 data/*

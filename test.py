@@ -62,7 +62,7 @@ def main():
     utils.set_seed(args.seed)
 
     # Get model directory
-    run_dir = Path(args.run_dir)
+    run_dir = Path(args.run)
     if not run_dir.is_dir():
         logging.error(f"Run dir not found: {run_dir}")
         sys.exit(1)
@@ -125,7 +125,7 @@ def main():
     fig = viz.fig_uncertainty_vs_correctness(entropies, correct)
     fig.savefig(run_dir / "uncertainty_vs_correctness.jpg", dpi=150)
 
-    fig = viz.fig_per_speaker_ent_acc(labels, entropies, correct)
+    fig = viz.fig_per_speaker_ent_acc(labels, entropies, correct, k=1000)
     fig.savefig(run_dir / "per_speaker_ent_acc.jpg", dpi=150)
 
     fig = viz.fig_pca_embeddings(

@@ -5,13 +5,13 @@ def parse_train_args():
     ap = argparse.ArgumentParser(description="Train MLP + Cosine classifier")
 
     ap.add_argument(
-        "--embeddings_root",
+        "--embes",
         type=str, required=True,
         help="Root folder with .npy embeddings"
     )
     ap.add_argument(
-        "--outdir",
-        type=str, default="./checkpoints/tmp",
+        "--out",
+        type=str, default="./runs/tmp",
         help="Where to save model and all files created during training"
     )
     ap.add_argument(
@@ -35,7 +35,7 @@ def parse_test_args():
     ap = argparse.ArgumentParser(description="Evaluate MLP with MC Dropout")
 
     ap.add_argument(
-        "--run_dir",
+        "--run",
         type=str, required=True,
         help="Directory with model.pt, label_map.json, and splits.json"
     )

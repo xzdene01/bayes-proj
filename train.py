@@ -89,8 +89,8 @@ def main():
 
     logging.debug(args)
 
-    embeddings_root = Path(args.embeddings_root).resolve()
-    outdir = Path(args.outdir).resolve()
+    embeddings_root = Path(args.embes).resolve()
+    outdir = Path(args.out).resolve()
     device = torch.device(args.device)
 
     all_files = [p for p in embeddings_root.rglob("*.npy") if p.is_file()]

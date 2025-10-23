@@ -60,7 +60,7 @@ def fig_per_speaker_ent_acc(
     speaker_ids: np.ndarray,        # (N,)
     entropies: np.ndarray,          # (N,)
     correct_mask: np.ndarray,       # (N,)
-    k: int = 20,
+    k: int = 100,
     title: str = "Per-speaker uncertainty (mean entropy) and accuracy",
     seed: int = 42
 ):
@@ -94,17 +94,20 @@ def fig_per_speaker_ent_acc(
     acc_sel = acc_spk[idxs]
 
     fig, ax1 = plt.subplots(figsize=(10, 5))
-    ax1.bar(range(len(spk_sel)), ent_sel, color="tab:blue", alpha=0.6)
+    ax1.bar(range(len(spk_sel)), ent_sel, color="tab:blue", alpha=0.5)
 
     ax1.set_title(title)
     ax1.set_xlabel("Speakers")
     ax1.set_ylabel("Mean entropy")
-    ax1.set_xticks(range(len(spk_sel)))
-    ax1.set_xticklabels(spk_sel, rotation=45, ha="right")
+    # ax1.set_xticks(range(len(spk_sel)))
+    # ax1.set_xticklabels(spk_sel, rotation=45, ha="right")  # too many spks
+
+    # Hide x ticks + labels, not important
+    ax1.tick_params(axis='x', bottom=False, labelbottom=False)
 
     # Overlay accuracy
     ax2 = ax1.twinx()
-    ax2.plot(range(len(spk_sel)), acc_sel, marker="o", color="tab:orange")
+    ax2.plot(range(len(spk_sel)), acc_sel, "k-", linewidth=0.5)
     ax2.set_ylabel("Accuracy")
 
     fig.tight_layout()
