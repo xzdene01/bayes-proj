@@ -8,14 +8,19 @@ import torch.nn as nn
 from pathlib import Path
 from torch.utils.data import DataLoader
 
-from general import utils
+from general import utils, viz
 from general.model import CosineMLP
 from general.arg import parse_test_args
 from general.dataset import EmbeddingDataset
-from general.eval import evaluate, mc_dropout_eval
+from general.eval import evaluate, mc_dropout_eval, single_sample
 
 
-def reconstruct_model(run_dir: Path, emb_dim: int, num_classes: int, device: torch.device) -> nn.Module:
+def reconstruct_model(
+        run_dir: Path,
+        emb_dim: int,
+        num_classes: int,
+        device: torch.device
+) -> nn.Module:
     """
     Rebuild CosineMLP from checkpoint shapes.
     - hidden_dim inferred from first MLP layer or fc weight.
@@ -92,15 +97,52 @@ def main():
 
     model = reconstruct_model(run_dir, embe_dim, num_classes, args.device)
 
+    T = int(args.mc_passes)
+
     # Deterministic eval (dropout OFF)
     test_loss, test_acc = evaluate(model, test_loader, args.device)
-    print(f"[Deterministic] test_loss={test_loss:.4f} acc={test_acc:.4f}")
+    print(f"[Deterministic] test_loss={test_loss:.4f}, acc={test_acc:.4f}")
 
     # MC-Dropout eval (dropout ON, T passes)
-    T = int(args.mc_passes)
-    acc_mean, mean_entropy, mean_var_ratio = mc_dropout_eval(model, test_loader, args.device, T=T)
-    print(f"[MC-Dropout T={T}] acc_mean={acc_mean:.4f} "
-          f"entropy={mean_entropy:.4f} var_ratio={mean_var_ratio:.4f}")
+    acc_mean, ent_mean, vr_mean, entropies, correct, labels = mc_dropout_eval(
+        model, test_loader, args.device, T=T
+    )
+    entropies = entropies.numpy()
+    correct = correct.numpy()
+    labels = labels.numpy()
+    print(
+        f"[MC-Dropout T={T}]"
+        f", mean accuracy={acc_mean:.4f}"
+        f", mean entropy={ent_mean:.4f}"
+        f", mean variance ration={vr_mean:.4f}"
+    )
+
+    # Visualizations
+    probs_T, y = single_sample(model, test_loader, args.device, T)
+    fig = viz.fig_sample(probs_T)
+    fig.savefig(run_dir / "sample_mc_boxplot.jpg", dpi=150)
+
+    fig = viz.fig_uncertainty_vs_correctness(entropies, correct)
+    fig.savefig(run_dir / "uncertainty_vs_correctness.jpg", dpi=150)
+
+    fig = viz.fig_per_speaker_ent_acc(labels, entropies, correct)
+    fig.savefig(run_dir / "per_speaker_ent_acc.jpg", dpi=150)
+
+    fig = viz.fig_pca_embeddings(
+        test_files,
+        entropies=entropies,
+        correct_mask=correct,
+        color="entropy"
+    )
+    fig.savefig(run_dir / "pca_by_entropy.jpg", dpi=150)
+
+    fig = viz.fig_pca_embeddings(
+        test_files,
+        entropies=entropies,
+        correct_mask=correct,
+        color="correct"
+    )
+    fig.savefig(run_dir / "pca_by_correct.jpg", dpi=150)
 
 
 if __name__ == "__main__":
