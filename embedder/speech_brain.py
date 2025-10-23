@@ -8,8 +8,7 @@ def download_model(model_id: str, local_dir: Path):
     snapshot_download(
         repo_id=f"speechbrain/{model_id}",
         repo_type="model",
-        local_dir=str(local_dir),
-        local_dir_use_symlinks=False
+        local_dir=str(local_dir)
     )
 
 
