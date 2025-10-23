@@ -48,7 +48,7 @@ def infer_embedding_dim(sample_file: Path) -> int:
 
 def set_logging():
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s | %(levelname)-8s | %(message)s",
         datefmt="%H:%M:%S"
     )
