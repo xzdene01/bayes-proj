@@ -21,15 +21,16 @@ import embedder.speech_brain as backend
 
 # Model configuration
 MODELS_DIR = Path("./models")
-# MODEL_ID = "spkrec-ecapa-voxceleb"
+# Model from strongest to weakest
+MODEL_ID = "spkrec-ecapa-voxceleb"
 # MODEL_ID = "spkrec-resnet-voxceleb"
-MODEL_ID = "spkrec-xvect-voxceleb"  # use the weakest model
+# MODEL_ID = "spkrec-xvect-voxceleb"
 LOCAL_MODEL_DIR = MODELS_DIR / MODEL_ID
 
 # Dataset configuration
 # DATASET = "VCTK"
-DATASET = "LibriSpeech"
-# DATASET = "CN-Celeb1"  # should be the hardes dataset here
+# DATASET = "LibriSpeech"
+DATASET = "CN-Celeb1"  # should be the hardes dataset here
 SRC_ROOT = Path(f"./data/{DATASET}")
 DST_ROOT = Path(f"./embeddings/{DATASET}_{MODEL_ID}")
 TARGET_SR = 16000
