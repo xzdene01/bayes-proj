@@ -36,38 +36,65 @@ def mc_dropout_eval(
     device: torch.device,
     T: int = 30,
 ) -> Tuple[float, float, float]:
-    """
-    Returns:
-        acc_mean       : accuracy using mean predictive probabilities
-        mean_entropy   : average predictive entropy over samples
-        mean_var_ratio : average variation ratio (1 - max prob)
-    """
     model.train()  # enable dropout
     total_correct, total = 0, 0
     ent_sum, vr_sum = 0.0, 0.0
+    all_entropies, all_correct, all_labels = [], [], []
 
+    # Process dataset in batches
     for xb, yb in loader:
         xb = xb.to(device)
         yb = yb.to(device)
 
+        # Preds per sample for T passes
         probs_T: List[torch.Tensor] = []
         for _ in range(T):
-            logits = model(xb)
+            logits = model(xb)  # (B, C)
             probs_T.append(F.softmax(logits, dim=1))
 
-        probs_mean = torch.stack(probs_T, dim=0).mean(dim=0)  # (B, C)
-        preds = probs_mean.argmax(dim=1)
+        # Mean distribution per sample
+        probs_T = torch.stack(probs_T, dim=0)  # (T, B, C)
+        probs_mean = probs_T.mean(dim=0)  # (B, C)
+
+        # Class per sample
+        preds = probs_mean.argmax(dim=1)  # (B,)
+
         total_correct += int((preds == yb).sum().item())
         total += yb.size(0)
 
         eps = 1e-12
-        entropy = -(probs_mean * (probs_mean + eps).log()).sum(dim=1)  # (B,)
-        var_ratio = 1.0 - probs_mean.max(dim=1).values                  # (B,)
-
+        entropy = -(probs_mean * (probs_mean + eps).log()).sum(dim=1)   # (B,)
+        var_ratio = 1.0 - probs_mean.max(dim=1).values  # (B,)
         ent_sum += float(entropy.sum().item())
         vr_sum += float(var_ratio.sum().item())
+
+        all_entropies.append(entropy.cpu())
+        all_correct.append((preds == yb).cpu())
+        all_labels.append(yb.cpu())
 
     acc_mean = total_correct / max(1, total)
     mean_entropy = ent_sum / max(1, total)
     mean_var_ratio = vr_sum / max(1, total)
-    return acc_mean, mean_entropy, mean_var_ratio
+
+    entropies = torch.cat(all_entropies)
+    correct = torch.cat(all_correct)
+    labels = torch.cat(all_labels)
+    return acc_mean, mean_entropy, mean_var_ratio, entropies, correct, labels
+
+
+@torch.no_grad()
+def single_sample(model, loader, device, T=30):
+    model.train()
+
+    xb, yb = next(iter(loader))
+    xb = xb[0:1].to(device)  # (1, D)
+    yb = yb[0].item()  # scalar
+
+    probs_T = []
+    for _ in range(T):
+        logits = model(xb)  # (1, C)
+        probs = F.softmax(logits, dim=1)  # (1, C)
+        probs_T.append(probs.squeeze(0))  # (C,)
+
+    probs_T = torch.stack(probs_T, dim=0)  # (T, C)
+    return probs_T.cpu(), yb
