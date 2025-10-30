@@ -12,7 +12,12 @@ from general.eval import evaluate
 from general.model import CosineMLP
 from general.arg import parse_train_args
 from general.dataset import EmbeddingDataset
-from general.utils import set_seed, build_label_map, infer_embedding_dim, set_logging
+from general.utils import (
+    set_seed,
+    build_label_map,
+    infer_embedding_dim,
+    set_logging
+)
 
 
 def train(
@@ -45,6 +50,7 @@ def train(
             loss.backward()
             optimizer.step()
 
+            # Accumulate loss and acc for each epoch
             total_loss += float(loss.item()) * yb.size(0)
             preds = logits.argmax(dim=1)
             total_correct += int((preds == yb).sum().item())
@@ -53,20 +59,26 @@ def train(
         train_loss = total_loss / max(1, total)
         train_acc = total_correct / max(1, total)
 
+        # Evaluate on validation set
         val_loss, val_acc = evaluate(model, val_loader, device)
 
-        print(f"Epoch {epoch:02d}/{epochs} | "
-              f"train_loss={train_loss:.4f} acc={train_acc:.4f} | "
-              f"val_loss={val_loss:.4f} acc={val_acc:.4f} | "
-              f"s={model.scale.item():.2f}")
-
-        history.append(
-            {"epoch": epoch, "train_loss": train_loss, "train_acc": train_acc,
-             "val_loss": val_loss, "val_acc": val_acc,
-             "scale": float(model.scale.item())}
+        logging.info(
+            f"Epoch {epoch:02d}/{epochs} | "
+            f"train_loss={train_loss:.4f} acc={train_acc:.4f} | "
+            f"val_loss={val_loss:.4f} acc={val_acc:.4f} | "
+            f"s={model.scale.item():.2f}"
         )
 
-        # Save best
+        history.append({
+            "epoch": epoch,
+            "train_loss": train_loss,
+            "train_acc": train_acc,
+            "val_loss": val_loss,
+            "val_acc": val_acc,
+            "scale": float(model.scale.item())
+        })
+
+        # Save best model by val acc
         if val_acc >= best_val_acc:
             best_val_acc = val_acc
             torch.save(
@@ -77,7 +89,7 @@ def train(
                 outdir / "model.pt",
             )
 
-    # Save history
+    # Save full training history
     with open(outdir / "training_summary.json", "w") as f:
         json.dump(history, f, indent=2)
 
@@ -165,7 +177,10 @@ def main():
         scale=args.scale,
     ).to(device)
 
-    train(model, train_loader, val_loader, device, args.epochs, args.lr, outdir)
+    train(
+        model, train_loader, val_loader,
+        device, args.epochs, args.lr, outdir
+    )
     logging.info(f"Training done. Model saved to: {outdir}")
 
 
