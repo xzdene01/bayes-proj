@@ -19,6 +19,7 @@ def reconstruct_model(
         run_dir: Path,
         emb_dim: int,
         num_classes: int,
+        dropout: float,
         device: torch.device
 ) -> nn.Module:
     """
@@ -29,26 +30,18 @@ def reconstruct_model(
     ckpt = torch.load(run_dir / "model.pt", map_location="cpu")
     state = ckpt["model_state"]
 
-    hidden_dim = None
-    for k in ["mlp.0.weight", "layers.0.weight", "encoder.0.weight"]:
-        if k in state:
-            hidden_dim = state[k].shape[0]  # (hidden_dim, emb_dim)
-            break
-    if hidden_dim is None:
-        if "fc.weight" in state:
-            hidden_dim = state["fc.weight"].shape[1]  # (num_classes, hidden_dim)
-        else:
-            raise RuntimeError("Cannot infer hidden_dim from checkpoint.")
+    # Infer hidden_dim from checkpoint
+    hidden_dim = int(state["backbone.1.weight"].shape[0])  # out features of first Linear
+    logging.info(f"Hidden dimension: {hidden_dim}")
 
-    init_scale = 20.0
-    if "scale" in state and state["scale"].ndim == 0:
-        init_scale = float(state["scale"].item())
+    # Infer scale from checkpoint
+    init_scale = float(state["scale"].item())
 
     model = CosineMLP(
         in_dim=emb_dim,
         hidden_dim=hidden_dim,
         num_classes=num_classes,
-        dropout=0.5,         # dropout prob doesn't affect state_dict loading
+        dropout=dropout,
         scale=init_scale,
     ).to(device)
 
@@ -95,13 +88,13 @@ def main():
         shuffle=False, num_workers=0, pin_memory=False
     )
 
-    model = reconstruct_model(run_dir, embe_dim, num_classes, args.device)
+    model = reconstruct_model(run_dir, embe_dim, num_classes, args.dropout, args.device)
 
     T = int(args.mc_passes)
 
     # Deterministic eval (dropout OFF)
     test_loss, test_acc = evaluate(model, test_loader, args.device)
-    print(f"[Deterministic] test_loss={test_loss:.4f}, acc={test_acc:.4f}")
+    logging.info(f"[Deterministic] test_loss={test_loss:.4f}, acc={test_acc:.4f}")
 
     # MC-Dropout eval (dropout ON, T passes)
     acc_mean, ent_mean, vr_mean, entropies, correct, labels = mc_dropout_eval(
@@ -110,7 +103,7 @@ def main():
     entropies = entropies.numpy()
     correct = correct.numpy()
     labels = labels.numpy()
-    print(
+    logging.info(
         f"[MC-Dropout T={T}]"
         f", mean accuracy={acc_mean:.4f}"
         f", mean entropy={ent_mean:.4f}"
@@ -118,15 +111,16 @@ def main():
     )
 
     # Visualizations
-    probs_T, y = single_sample(model, test_loader, args.device, T)
+    dpi = 300
+    probs_T, y = single_sample(model, test_loader, args.device, T, seed=1)
     fig = viz.fig_sample(probs_T)
-    fig.savefig(run_dir / "sample_mc_boxplot.jpg", dpi=150)
+    fig.savefig(run_dir / "sample_mc_boxplot.jpg", dpi=dpi)
 
     fig = viz.fig_uncertainty_vs_correctness(entropies, correct)
-    fig.savefig(run_dir / "uncertainty_vs_correctness.jpg", dpi=150)
+    fig.savefig(run_dir / "uncertainty_vs_correctness.jpg", dpi=dpi)
 
     fig = viz.fig_per_speaker_ent_acc(labels, entropies, correct, k=1000)
-    fig.savefig(run_dir / "per_speaker_ent_acc.jpg", dpi=150)
+    fig.savefig(run_dir / "per_speaker_ent_acc.jpg", dpi=dpi)
 
     fig = viz.fig_pca_embeddings(
         test_files,
@@ -134,7 +128,7 @@ def main():
         correct_mask=correct,
         color="entropy"
     )
-    fig.savefig(run_dir / "pca_by_entropy.jpg", dpi=150)
+    fig.savefig(run_dir / "pca_by_entropy.jpg", dpi=dpi)
 
     fig = viz.fig_pca_embeddings(
         test_files,
@@ -142,7 +136,7 @@ def main():
         correct_mask=correct,
         color="correct"
     )
-    fig.savefig(run_dir / "pca_by_correct.jpg", dpi=150)
+    fig.savefig(run_dir / "pca_by_correct.jpg", dpi=dpi)
 
 
 if __name__ == "__main__":

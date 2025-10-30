@@ -52,5 +52,6 @@ def parse_test_args():
 
     ap.add_argument("--batch_size", type=int, default=128)
     ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--dropout", type=float, default=0.5)
 
     return ap.parse_args()
