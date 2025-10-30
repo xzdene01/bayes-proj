@@ -20,11 +20,11 @@ def parse_train_args():
         choices=["cpu", "cuda", "mps"]
     )
 
-    ap.add_argument("--epochs", type=int, default=15)
+    ap.add_argument("--epochs", type=int, default=30)
     ap.add_argument("--batch_size", type=int, default=128)
     ap.add_argument("--hidden_dim", type=int, default=512)
     ap.add_argument("--dropout", type=float, default=0.3)
-    ap.add_argument("--scale", type=float, default=30.0)
+    ap.add_argument("--scale", type=float, default=40.0)
     ap.add_argument("--lr", type=float, default=1e-3)
     ap.add_argument("--seed", type=int, default=42)
 
@@ -41,7 +41,7 @@ def parse_test_args():
     )
     ap.add_argument(
         "--mc_passes",
-        type=int, default=30,
+        type=int, default=100,
         help="Number of Monte Carlo dropout passes"
     )
     ap.add_argument(

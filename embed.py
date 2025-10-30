@@ -1,5 +1,5 @@
 """
-Precompute ECAPA-TDNN embeddings for a subset of VoxCeleb1.
+Precompute ECAPA-TDNN embeddings.
 
 Directory layout:
     ./models/               # model cache will be stored here

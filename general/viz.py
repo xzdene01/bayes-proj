@@ -25,13 +25,12 @@ def fig_sample(
     data = [p[:, i] for i in top_idx]
     labels = [class_names[i] if class_names else f"c{i}" for i in top_idx]
 
-    fig, ax = plt.subplots(figsize=(10, 7))
+    fig, ax = plt.subplots(figsize=(5, 2))
     ax.boxplot(data, showfliers=False)
 
     ax.set_title(title)
-    ax.set_xlabel("Top-K classes")
     ax.set_ylabel("Probability")
-    ax.set_xticklabels(labels, rotation=45, ha="right")
+    ax.set_xticklabels(labels, rotation=0, ha="right")
     return fig
 
 
@@ -47,7 +46,7 @@ def fig_uncertainty_vs_correctness(
     corr = entropies[correct_mask]
     inc = entropies[~correct_mask]
 
-    fig, ax = plt.subplots(figsize=(5, 4))
+    fig, ax = plt.subplots(figsize=(5, 2))
     ax.boxplot([corr, inc], showfliers=False, labels=["Correct", "Incorrect"])
 
     ax.set_title(title)
@@ -57,9 +56,9 @@ def fig_uncertainty_vs_correctness(
 
 # Per-speaker mean entropy + accuracy
 def fig_per_speaker_ent_acc(
-    speaker_ids: np.ndarray,        # (N,)
-    entropies: np.ndarray,          # (N,)
-    correct_mask: np.ndarray,       # (N,)
+    speaker_ids: np.ndarray,
+    entropies: np.ndarray,
+    correct_mask: np.ndarray,
     k: int = 100,
     title: str = "Per-speaker uncertainty (mean entropy) and accuracy",
     seed: int = 42
@@ -78,8 +77,8 @@ def fig_per_speaker_ent_acc(
         sums_acc[spk] += int(ok)
 
     spk_list = list(counts.keys())
-    mean_ent = np.array([sums_ent[s]/counts[s] for s in spk_list])
-    acc_spk = np.array([sums_acc[s]/counts[s] for s in spk_list])
+    mean_ent = np.array([sums_ent[s] / counts[s] for s in spk_list])
+    acc_spk = np.array([sums_acc[s] / counts[s] for s in spk_list])
 
     # Select K random speakers
     np.random.seed(seed)
@@ -93,7 +92,7 @@ def fig_per_speaker_ent_acc(
     ent_sel = mean_ent[idxs]
     acc_sel = acc_spk[idxs]
 
-    fig, ax1 = plt.subplots(figsize=(10, 5))
+    fig, ax1 = plt.subplots(figsize=(10, 3))
     ax1.bar(range(len(spk_sel)), ent_sel, color="tab:blue", alpha=0.5)
 
     ax1.set_title(title)
