@@ -1,4 +1,5 @@
 import torch
+import random
 import torch.nn as nn
 
 from typing import Tuple, List
@@ -83,12 +84,19 @@ def mc_dropout_eval(
 
 
 @torch.no_grad()
-def single_sample(model, loader, device, T=30):
+def single_sample(model, loader, device, T=30, seed=42):
     model.train()
+    random.seed(seed)
 
-    xb, yb = next(iter(loader))
-    xb = xb[0:1].to(device)  # (1, D)
-    yb = yb[0].item()  # scalar
+    loader_iter = iter(loader)
+    batches = list(loader_iter)
+
+    batch_idx = random.randint(0, len(batches) - 1)
+    xb, yb = batches[batch_idx]
+
+    item_idx = random.randint(0, xb.size(0) - 1)
+    xb = xb[item_idx:item_idx + 1].to(device)  # (1, D)
+    yb = yb[item_idx].item()  # scalar
 
     probs_T = []
     for _ in range(T):
